@@ -1,23 +1,14 @@
 from arq import create_pool
-from arq.connections import ArqRedis, RedisSettings
+from arq.connections import ArqRedis
 
 from app.core.config import settings
 
 _arq_pool: ArqRedis | None = None
 
 
-def _redis_settings() -> RedisSettings:
-    return RedisSettings(
-        host=settings.redis_host,
-        port=settings.redis_port,
-        password=settings.redis_password,
-        database=settings.redis_database,
-    )
-
-
 async def init_redis() -> None:
     global _arq_pool
-    _arq_pool = await create_pool(_redis_settings())
+    _arq_pool = await create_pool(settings.redis_settings)
 
 
 async def close_redis() -> None:

@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:16
+    image: postgres:18
     environment:
       POSTGRES_USER: app
       POSTGRES_PASSWORD: app
@@ -8,15 +8,19 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      # Postgres 18+ wants the mount one level up; it refuses to start with a
+      # volume at /var/lib/postgresql/data.
+      - pgdata:/var/lib/postgresql
 
   redis:
-    image: redis:7
+    image: redis:8.2
     ports:
       - "6379:6379"
 
   api:
-    build: ./api
+    build:
+      context: ./api
+      target: dev
     ports:
       - "8000:8000"
     environment:
@@ -34,7 +38,9 @@ services:
       - redis
 
   worker:
-    build: ./worker
+    build:
+      context: ./worker
+      target: dev
     environment:
       DATABASE_URL: postgresql+asyncpg://app:app@db:5432/app
       REDIS_URL: redis://redis:6379

@@ -47,11 +47,11 @@ Background job processor that consumes tasks from Redis.
 - **Database**: Direct async connection to Postgres
 - **Jobs**: Processes records asynchronously (updates status from pending → processing → completed)
 
-### Database (PostgreSQL 16)
+### Database (PostgreSQL 18)
 
 Primary data store. Managed by Railway in production, runs as a Docker container locally.
 
-### Redis 7
+### Redis 8.2
 
 Queue backend for ARQ. Used for job dispatch between API and Worker. Can also be used for caching.
 

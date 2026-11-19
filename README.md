@@ -34,8 +34,8 @@ worker (Python/ARQ)
 | **web** | Next.js 16, TypeScript, Tailwind, shadcn/ui | Frontend with CRUD UI |
 | **api** | FastAPI, SQLAlchemy, Alembic | REST API with DB + Redis |
 | **worker** | Python, ARQ | Background job processor |
-| **db** | PostgreSQL 16 | Primary data store |
-| **redis** | Redis 7 | Queue backend + cache |
+| **db** | PostgreSQL 18 | Primary data store |
+| **redis** | Redis 8.2 | Queue backend + cache |
 
 ## Deploy on Railway
 
@@ -50,6 +50,33 @@ worker (Python/ARQ)
 3. Push changes — Railway auto-deploys from your fork
 
 See [docs/deployment.md](docs/deployment.md) for detailed configuration.
+
+### Already deployed this template?
+
+Deploys created before 19 November 2026 run an older commit. Railway does not
+redeploy a template-created service when this repo changes, and plain
+**Redeploy** re-runs the same commit, so the fixes below only reach you if you
+ask for them.
+
+What you are missing:
+
+* The Status page reports the API as unreachable even when it is fine. It called
+  a path the web app does not serve.
+* Pointing `DATABASE_URL` at Railway's own `${{Postgres.DATABASE_URL}}` crashes
+  the api and worker with a missing `psycopg2`. The URL is now rewritten to the
+  async driver automatically.
+* The api container exits instead of waiting when Postgres is slow to accept
+  connections, which can fail a deploy.
+* A Postgres restart leaves dead connections in the pool, so the first request
+  after it fails.
+* Next.js, React and the Python dependencies carried known CVEs, two of them
+  rated critical. The web app's runtime dependencies now audit clean
+  (`npm audit --omit=dev`). Four moderate findings remain in build-time tooling,
+  pending an upstream fix.
+
+To pick them up, open the `api`, `web` and `worker` services in Railway and
+choose **Deploy Latest Commit** on each. No new variables are required and there
+are no new migrations.
 
 ## Quick Start (Local)
 

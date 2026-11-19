@@ -65,7 +65,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  health: () => request<HealthStatus>("/health"),
+  health: () => request<HealthStatus>("/api/health"),
   appInfo: () => request<AppInfo>("/api/v1/app"),
   records: {
     list: (skip = 0, limit = 50) =>

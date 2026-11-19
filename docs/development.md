@@ -3,7 +3,7 @@
 ## Prerequisites
 
 - Docker and Docker Compose
-- Node.js 20+ (for web linting/type checks)
+- Node.js 24+ (for web linting/type checks)
 - Git
 
 ## Quick Start
@@ -190,3 +190,15 @@ Check Redis is running and worker logs:
 ./dev/toolbox/run health
 ./dev/toolbox/run logs worker
 ```
+
+### Postgres exits on startup after pulling these changes
+
+The local database moved from Postgres 16 to 18, and Postgres 18 refuses to
+start against a volume written by 16. The dev volume holds nothing you need, so
+drop it and let it initialise again:
+
+```bash
+docker compose down -v
+./dev/toolbox/run up
+```
+

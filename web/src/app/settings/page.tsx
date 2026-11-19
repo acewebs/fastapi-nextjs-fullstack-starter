@@ -1,31 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { AppInfo } from "@/lib/api";
+import { useAsyncData } from "@/hooks/use-async-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export default function SettingsPage() {
-  const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchInfo = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await api.appInfo();
-      setAppInfo(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch app info");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchInfo();
-  }, [fetchInfo]);
+  const {
+    data: appInfo,
+    error,
+    loading,
+  } = useAsyncData<AppInfo>(() => api.appInfo(), "Failed to fetch app info");
 
   return (
     <div className="space-y-6">

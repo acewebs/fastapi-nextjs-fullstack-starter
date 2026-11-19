@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
-import type { Record } from "@/lib/api";
+import type { Record, RecordListResponse } from "@/lib/api";
+import { useAsyncData } from "@/hooks/use-async-data";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -35,30 +36,20 @@ const statusVariant = (status: string) => {
 };
 
 export function RecordList() {
-  const [records, setRecords] = useState<Record[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [editRecord, setEditRecord] = useState<Record | null>(null);
 
-  const fetchRecords = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const data = await api.records.list();
-      setRecords(data.items);
-      setTotal(data.total);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch records");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    data: list,
+    error,
+    loading,
+    refresh,
+    reload,
+    setError,
+  } = useAsyncData<RecordListResponse>(() => api.records.list(), "Failed to fetch records");
 
-  useEffect(() => {
-    fetchRecords();
-  }, [fetchRecords]);
+  const records = list?.items ?? [];
+  const total = list?.total ?? 0;
 
   // Poll every 3s while any record is still pending or processing
   const hasPending = records.some((r) => r.status === "pending" || r.status === "processing");
@@ -66,26 +57,21 @@ export function RecordList() {
 
   useEffect(() => {
     if (hasPending) {
-      pollRef.current = setInterval(async () => {
-        try {
-          const data = await api.records.list();
-          setRecords(data.items);
-          setTotal(data.total);
-        } catch {
-          // silent — don't show errors during background poll
-        }
+      // reload, not refresh: a background poll must not flash the loading state.
+      pollRef.current = setInterval(() => {
+        void reload();
       }, 3000);
     }
     return () => {
       if (pollRef.current) clearInterval(pollRef.current);
     };
-  }, [hasPending]);
+  }, [hasPending, reload]);
 
   const handleCreate = async (data: Parameters<typeof api.records.create>[0]) => {
     try {
       await api.records.create(data);
       setShowCreate(false);
-      fetchRecords();
+      void refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create record");
     }
@@ -96,7 +82,7 @@ export function RecordList() {
     try {
       await api.records.update(editRecord.id, data);
       setEditRecord(null);
-      fetchRecords();
+      void refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update record");
     }
@@ -105,7 +91,7 @@ export function RecordList() {
   const handleDelete = async (id: string) => {
     try {
       await api.records.delete(id);
-      fetchRecords();
+      void refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete record");
     }
