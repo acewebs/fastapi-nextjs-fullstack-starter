@@ -1,12 +1,21 @@
-FROM python:3.12-slim
+FROM python:3.13-slim AS base
 
 WORKDIR /app
 
-COPY requirements.txt requirements-dev.txt ./
-RUN pip install --no-cache-dir -r requirements-dev.txt
+ENV PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENV PYTHONPATH=/app
-
 CMD ["python", "-m", "app.worker"]
+
+# Adds the lint toolchain. docker-compose builds this target; Railway builds
+# the last stage, which stays free of it.
+FROM base AS dev
+COPY requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
+FROM base AS production

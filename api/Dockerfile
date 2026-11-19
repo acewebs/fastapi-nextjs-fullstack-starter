@@ -1,14 +1,21 @@
-FROM python:3.12-slim
+FROM python:3.13-slim AS base
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends gcc && rm -rf /var/lib/apt/lists/*
+ENV PYTHONPATH=/app \
+    PYTHONUNBUFFERED=1
 
-COPY requirements.txt requirements-dev.txt ./
-RUN pip install --no-cache-dir -r requirements-dev.txt
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-ENV PYTHONPATH=/app
+ENTRYPOINT ["./entrypoint.sh"]
 
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Adds the test and lint toolchain. docker-compose builds this target; Railway
+# builds the last stage, which stays free of it.
+FROM base AS dev
+COPY requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements-dev.txt
+
+FROM base AS production

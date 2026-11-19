@@ -16,8 +16,12 @@ Click the **Deploy on Railway** button in the README. Railway will:
 1. Fork this repo to your GitHub account
 2. Create a project with all services configured
 3. Deploy everything automatically
+4. Generate a public domain for the Web service
 
 After deployment, clone your fork and start building on top of it.
+
+The Web service is the only one with a public address. The API, worker, Postgres
+and Redis stay on the private network.
 
 ## Manual Setup
 
@@ -52,7 +56,12 @@ Push this repository to a public GitHub repo.
 | `PORT` | `8000` |
 | `HOST` | `0.0.0.0` |
 
-4. **No public domain needed** — the Web service proxies API requests over the private network.
+4. Set the healthcheck path to `/health` (Settings, Deploy).
+5. **No public domain needed.** The Web service proxies API requests over the private network.
+
+`DATABASE_URL` is written with the `postgresql+asyncpg://` driver above because
+every engine in this project is async. A plain `postgresql://` URL also works:
+the app rewrites it on load.
 
 ### 4. Deploy the Worker Service
 
@@ -81,7 +90,8 @@ Push this repository to a public GitHub repo.
 |----------|-------|
 | `BACKEND_URL` | `http://${{api.RAILWAY_PRIVATE_DOMAIN}}:8000` |
 
-4. Generate a **public domain** for this service (Settings → Networking → Generate Domain).
+4. Generate a **public domain** for this service (Settings, Networking, Generate Domain).
+5. Set the healthcheck path to `/api/health` (Settings, Deploy).
 
 ### 6. Verify
 

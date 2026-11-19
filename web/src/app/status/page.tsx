@@ -1,33 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import type { HealthStatus } from "@/lib/api";
+import { useAsyncData } from "@/hooks/use-async-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 export default function StatusPage() {
-  const [health, setHealth] = useState<{ status: string } | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const checkHealth = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await api.health();
-      setHealth(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reach API");
-      setHealth(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    checkHealth();
-  }, [checkHealth]);
+  const {
+    data: health,
+    error,
+    loading,
+    refresh,
+  } = useAsyncData<HealthStatus>(() => api.health(), "Failed to reach API");
 
   return (
     <div className="space-y-6">
@@ -61,7 +47,7 @@ export default function StatusPage() {
           ) : (
             <p className="text-sm text-muted-foreground">Checking connection...</p>
           )}
-          <Button variant="outline" size="sm" className="mt-4" onClick={checkHealth}>
+          <Button variant="outline" size="sm" className="mt-4" onClick={refresh}>
             Refresh
           </Button>
         </CardContent>

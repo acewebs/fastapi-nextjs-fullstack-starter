@@ -9,6 +9,14 @@ async def test_health(client):
 
 
 @pytest.mark.asyncio
+async def test_health_api_alias(client):
+    """The web app proxies /api/health, and calls it directly when server-side."""
+    response = await client.get("/api/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+@pytest.mark.asyncio
 async def test_app_info(client):
     response = await client.get("/api/v1/app")
     assert response.status_code == 200
