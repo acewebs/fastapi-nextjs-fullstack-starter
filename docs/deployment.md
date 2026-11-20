@@ -49,7 +49,6 @@ Push this repository to a public GitHub repo.
 | `DATABASE_URL` | `postgresql+asyncpg://${{postgres.PGUSER}}:${{postgres.PGPASSWORD}}@${{postgres.PGHOST}}:${{postgres.PGPORT}}/${{postgres.PGDATABASE}}` |
 | `REDIS_URL` | `redis://${{redis.REDISUSER}}:${{redis.REDISPASSWORD}}@${{redis.REDISHOST}}:${{redis.REDISPORT}}` |
 | `SECRET_KEY` | `${{ secret(64, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789") }}` |
-| `CORS_ORIGINS` | `https://${{web.RAILWAY_PUBLIC_DOMAIN}}` |
 | `APP_ENV` | `production` |
 | `APP_NAME` | `starter-api` |
 | `LOG_LEVEL` | `info` |
@@ -58,6 +57,13 @@ Push this repository to a public GitHub repo.
 
 4. Set the healthcheck path to `/health` (Settings, Deploy).
 5. **No public domain needed.** The Web service proxies API requests over the private network.
+
+Leave `CORS_ORIGINS` unset. The browser only ever talks to the Web service, so
+the API's CORS policy is never exercised. Set it to
+`https://${{web.RAILWAY_PUBLIC_DOMAIN}}` only if you give the API a public
+domain of its own, and add authentication before you do: the record endpoints
+accept POST and DELETE unauthenticated, on the assumption that the port is
+private.
 
 `DATABASE_URL` is written with the `postgresql+asyncpg://` driver above because
 every engine in this project is async. A plain `postgresql://` URL also works:
@@ -88,7 +94,8 @@ the app rewrites it on load.
 
 | Variable | Value |
 |----------|-------|
-| `BACKEND_URL` | `http://${{api.RAILWAY_PRIVATE_DOMAIN}}:8000` |
+| `PORT` | `8080` |
+| `BACKEND_URL` | `http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}` |
 
 4. Generate a **public domain** for this service (Settings, Networking, Generate Domain).
 5. Set the healthcheck path to `/api/health` (Settings, Deploy).
@@ -113,8 +120,11 @@ http://<service-name>.railway.internal:<port>
 
 The Web service uses this to proxy API requests to the backend:
 ```
-BACKEND_URL=http://api.railway.internal:8000
+BACKEND_URL=http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}
 ```
+
+Referencing `${{api.PORT}}` rather than hardcoding the port means changing the
+API's port cannot leave the Web service pointing at the old one.
 
 Browser requests to `/api/*` are forwarded by Next.js to the API over the private network. This means the API never needs a public domain.
 
