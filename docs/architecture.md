@@ -75,7 +75,7 @@ Queue backend for ARQ. Used for job dispatch between API and Worker. Can also be
 | Route | Protocol | URL Pattern |
 |-------|----------|-------------|
 | Browser → Web | HTTPS (public) | `https://your-app.railway.app` |
-| Web → API (proxy) | HTTP (internal) | `http://api.railway.internal:8000` |
+| Web → API (proxy) | HTTP (internal) | `http://${{api.RAILWAY_PRIVATE_DOMAIN}}:${{api.PORT}}` |
 | API → Postgres | TCP | `DATABASE_URL` |
 | API → Redis | TCP | `REDIS_URL` |
 | Worker → Redis | TCP | `REDIS_URL` |
